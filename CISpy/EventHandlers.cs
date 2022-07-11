@@ -23,27 +23,27 @@ namespace CISpy
 			ffPlayers.Clear();
 			if (rand.Next(1, 101) <= CISpy.instance.Config.GuardSpawnChance)
 			{
-                Player[] playerGuard = Player.Get(RoleType.FacilityGuard).ToArray();
-				if (playerGuard.Count() > 0)
+				Timing.CallDelayed(0.8f, () =>
 				{
-					Player player = RandomElement.RandomItem(playerGuard);
-					Timing.CallDelayed(0.8f, () =>
+					Player[] playerGuard = Player.Get(RoleType.FacilityGuard).ToArray();
+					if (playerGuard.Count() > 0)
 					{
+						Player player = RandomElement.RandomItem(playerGuard);
 						MakeSpy(player);
-					});
-				}
+					}
+				});
+
 			}
 		}
 
 		public void OnTeamRespawn(RespawningTeamEventArgs ev)
 		{
-			if (ev.NextKnownTeam == Respawning.SpawnableTeamType.NineTailedFox && rand.Next(1, 101) <= CISpy.instance.Config.SpawnChance && ev.Players.Count >= CISpy.instance.Config.MinimumSquadSize)
+			if (ev.NextKnownTeam is Respawning.SpawnableTeamType.NineTailedFox && rand.Next(1, 101) <= CISpy.instance.Config.SpawnChance && ev.Players.Count >= CISpy.instance.Config.MinimumSquadSize)
 			{
-				List<Player> respawn = new List<Player>(ev.Players);
 				Timing.CallDelayed(0.1f, () =>
 				{
-					List<Player> roleList = respawn.Where(x => CISpy.instance.Config.SpyRoles.Contains(x.Role)).ToList();
-					if (roleList.Count > 0)
+					List<Player> roleList = ev.Players.Where(x => CISpy.instance.Config.SpyRoles.Contains(x.Role)).ToList();
+					if (roleList.Any())
 					{
 						Player player = roleList[rand.Next(roleList.Count)];
 						if (player != null)
@@ -60,7 +60,7 @@ namespace CISpy
 
 		public void OnEscaping(EscapingEventArgs ev)
 		{
-			if (ev.Player.Role == RoleType.ClassD && ev.Player.IsCuffed && spies.ContainsKey(ev.Player.Cuffer))
+			if (ev.Player.Role.Type is RoleType.ClassD && ev.Player.IsCuffed && spies.ContainsKey(ev.Player.Cuffer))
 			{
 				Timing.CallDelayed(0.1f, () =>
 				{
