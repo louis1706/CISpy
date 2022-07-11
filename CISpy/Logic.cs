@@ -19,13 +19,7 @@ namespace CISpy
 			{
 				if (!CISpy.instance.Config.SpawnWithGrenade && full)
 				{
-					for (int i = player.Items.Count - 1; i >= 0; i--)
-					{
-						if (player.Items.ElementAt(i).Type == ItemType.GrenadeHE)
-						{
-							player.RemoveItem(player.Items.ElementAt(i));
-						}
-					}
+					player.RemoveItem(x => x.Type is ItemType.GrenadeHE);
 				}
 				player.AddItem(ItemType.KeycardChaosInsurgency);
 				spies.Add(player, isVulnerable);
@@ -49,9 +43,9 @@ namespace CISpy
 		{
 			foreach (KeyValuePair<Player, bool> spy in spies)
 			{
-				int health = (int)spy.Key.Health;
-				Dictionary<global::ItemType, ushort> ammo = new Dictionary<global::ItemType, ushort>();
-				foreach(global::ItemType ammoType in spy.Key.Ammo.Keys)
+			    float health = spy.Key.Health;
+				Dictionary<ItemType, ushort> ammo = new Dictionary<ItemType, ushort>();
+				foreach(ItemType ammoType in spy.Key.Ammo.Keys)
 				{
 					ammo.Add(ammoType, spy.Key.Ammo[ammoType]);
 				}
@@ -61,7 +55,7 @@ namespace CISpy
 				Timing.CallDelayed(0.5f, () =>
 				{
 					spy.Key.Health = health;
-					foreach (global::ItemType ammoType in ammo.Keys)
+					foreach (ItemType ammoType in ammo.Keys)
 					{
 						spy.Key.Ammo[ammoType] = ammo[ammoType];
 					}
@@ -74,20 +68,18 @@ namespace CISpy
 
 		private void GrantFF(Player player)
 		{
-			player.IsFriendlyFireEnabled = true;
 			ffPlayers.Add(player);
 		}
 
 		private void RemoveFF(Player player)
 		{
-			player.IsFriendlyFireEnabled = false;
 			ffPlayers.Remove(player);
 		}
 
 		private int CountRoles(Team team, List<Player> pList)
 		{
 			int count = 0;
-			foreach (Player pl in pList) if (pl.Team == team) count++;
+			foreach (Player pl in pList) if (pl.Role.Team == team) count++;
 			return count;
 		}
 
@@ -99,7 +91,7 @@ namespace CISpy
 			{
 				scp035 = TryGet035();
 			}
-			catch (Exception x)
+			catch
 			{
 				Log.Debug("SCP-035 not installed, skipping method call...");
 			}

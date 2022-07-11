@@ -10,12 +10,12 @@ namespace CISpy
 	partial class EventHandlers
 	{
 		internal static Dictionary<Player, bool> spies = new Dictionary<Player, bool> ();
-		private List<Player> ffPlayers = new List<Player>();
+		private readonly List<Player> ffPlayers = new List<Player>();
 
 		private bool isDisplayFriendly = false;
 		//private bool isDisplaySpy = false;
 
-		private Random rand = new Random();
+		private readonly Random rand = new Random();
 
 		public void OnRoundStart()
 		{
@@ -23,9 +23,10 @@ namespace CISpy
 			ffPlayers.Clear();
 			if (rand.Next(1, 101) <= CISpy.instance.Config.GuardSpawnChance)
 			{
-				Player player = Player.List.FirstOrDefault(x => x.Role == RoleType.FacilityGuard);
-				if (player != null)
+                Player[] playerGuard = Player.Get(RoleType.FacilityGuard).ToArray();
+				if (playerGuard.Count() > 0)
 				{
+					Player player = RandomElement.RandomItem(playerGuard);
 					Timing.CallDelayed(0.8f, () =>
 					{
 						MakeSpy(player);
@@ -67,8 +68,8 @@ namespace CISpy
 					{
 						MakeSpy(ev.Player);
 					});
-					RoundSummary.escaped_scientists--;
-					RoundSummary.escaped_ds++;
+					RoundSummary.EscapedScientists--;
+					RoundSummary.EscapedClassD++;
 				});
 			}
 		}
@@ -98,8 +99,8 @@ namespace CISpy
 
 		public void OnHandcuffing(HandcuffingEventArgs ev)
 		{
-			if ((spies.ContainsKey(ev.Target) && ev.Cuffer.Team == Team.CHI) ||
-				(spies.ContainsKey(ev.Cuffer) && ev.Target.Team == Team.CHI))
+			if ((spies.ContainsKey(ev.Target) && ev.Cuffer.Role.Team == Team.CHI) ||
+				(spies.ContainsKey(ev.Cuffer) && ev.Target.Role.Team == Team.CHI))
 			{
 				ev.IsAllowed = false;
 			}
@@ -121,12 +122,12 @@ namespace CISpy
 			{
 				scp035 = TryGet035();
 			} 
-			catch (Exception x)
+			catch
 			{
 				Log.Debug("SCP-035 not installed, skipping method call...");
 			}
 
-			if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && ev.Target.Id != ev.Attacker.Id && (ev.Attacker.Team == Team.CHI || ev.Attacker.Team == Team.CDP) &&  ev.Attacker.Id != scp035?.Id)
+			if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && ev.Target.Id != ev.Attacker.Id && (ev.Attacker.Role.Team == Team.CHI || ev.Attacker.Role.Team == Team.CDP) &&  ev.Attacker.Id != scp035?.Id)
 			{
 				if (!isDisplayFriendly)
 				{
@@ -139,7 +140,7 @@ namespace CISpy
 				});
 				ev.IsAllowed = false;
 			}
-			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Attacker) && (ev.Target.Team == Team.CHI || ev.Target.Team == Team.CDP) && ev.Target.Id != scp035?.Id)
+			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Attacker) && (ev.Target.Role.Team == Team.CHI || ev.Target.Role.Team == Team.CDP) && ev.Target.Id != scp035?.Id)
 			{
 				ev.IsAllowed = false;
 			}
@@ -170,16 +171,16 @@ namespace CISpy
 				scp035 = TryGet035();
 			}
 
-			if (spies.ContainsKey(ev.Shooter) && !spies.ContainsKey(target) && (target.Team == Team.RSC || target.Team == Team.MTF) && target.Id != scp035?.Id)
+			if (spies.ContainsKey(ev.Shooter) && !spies.ContainsKey(target) && (target.Role.Team == Team.RSC || target.Role.Team == Team.MTF) && target.Id != scp035?.Id)
 			{
 				if (!spies[ev.Shooter])
 				{
 					spies[ev.Shooter] = true;
-					ev.Shooter.Broadcast(10, $"<i>You have attacked a {(target.Team == Team.MTF ? "<color=#00b0fc>Nine Tailed Fox" : "<color=#fcff8d>Scientist")}</color>, you are now able to be killed by <color=#00b0fc>Nine Tailed Fox</color> and <color=#fcff8d>Scientists</color>.</i>");
+					ev.Shooter.Broadcast(10, $"<i>You have attacked a {(target.Role.Team == Team.MTF ? "<color=#00b0fc>Nine Tailed Fox" : "<color=#fcff8d>Scientist")}</color>, you are now able to be killed by <color=#00b0fc>Nine Tailed Fox</color> and <color=#fcff8d>Scientists</color>.</i>");
 				}
 				GrantFF(ev.Shooter);
 			}
-			else if (spies.ContainsKey(target) && !spies.ContainsKey(ev.Shooter) && (ev.Shooter.Team == Team.MTF || ev.Shooter.Team == Team.RSC))
+			else if (spies.ContainsKey(target) && !spies.ContainsKey(ev.Shooter) && (ev.Shooter.Role.Team == Team.MTF || ev.Shooter.Role.Team == Team.RSC))
 			{
 				if (spies[target])
 				{
